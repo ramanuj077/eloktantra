@@ -1,8 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import dotenv from 'dotenv';
-// @ts-ignore
-import { ApiResponse } from '@eloktantra/types';
+import supabasePlugin from './plugins/supabase';
+import candidateRoutes from './routes/candidates';
 
 dotenv.config();
 
@@ -11,22 +11,16 @@ const PORT = parseInt(process.env.PORT || '4002', 10);
 
 fastify.register(cors);
 
+// Register Supabase Plugin
+fastify.register(supabasePlugin);
+
 // Health Check
 fastify.get('/health', async () => {
   return { status: 'OK', service: 'candidate-service' };
 });
 
-// Candidate APIs
-fastify.get('/candidates', async (request, reply) => {
-  // TODO: Fetch candidates via Prisma
-  return { success: true, count: 0, candidates: [] };
-});
-
-fastify.get('/candidates/:id', async (request, reply) => {
-  const { id } = request.params as any;
-  // TODO: Fetch single candidate by id
-  return { success: true, candidate: { id, name: "Sample Candidate" } };
-});
+// Register routes
+fastify.register(candidateRoutes);
 
 const start = async () => {
   try {
