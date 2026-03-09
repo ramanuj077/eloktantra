@@ -1,23 +1,17 @@
 {
   "name": "eloktantra-monorepo",
-  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "npm run dev --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
-    "start": "npm run start --workspaces --if-present",
-    "db:push": "npm run db:push --workspace shared-db",
-    "db:generate": "npm run db:generate --workspace shared-db",
-    "db:seed": "npm run db:seed --workspace shared-db"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "db:push": "pnpm --filter @eloktantra/database db:push",
+    "db:generate": "pnpm --filter @eloktantra/database db:generate",
+    "db:seed": "pnpm --filter @eloktantra/database db:seed"
   },
-  "workspaces": [
-    "apps/*",
-    "services/*",
-    "shared/*"
-  ],
   "devDependencies": {
+    "turbo": "^1.12.0",
     "typescript": "^5.0.0",
-    "ts-node": "^10.9.1",
     "@types/node": "^20.0.0"
   }
 }

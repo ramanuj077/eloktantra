@@ -1,37 +1,50 @@
-import express from 'express';
-import cors from 'cors';
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
-import { UserRole } from 'eloktantra-types';
+// @ts-ignore
+import { UserRole } from '@eloktantra/types';
 
 dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT || 4001;
+const fastify = Fastify({ logger: true });
+const PORT = parseInt(process.env.PORT || '4001', 10);
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
-app.use(cors());
-app.use(express.json());
+fastify.register(cors);
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', service: 'auth-service' });
+fastify.get('/health', async (request, reply) => {
+  return { status: 'OK', service: 'auth-service' };
 });
 
-// Auth Routes (Scaffold)
-app.post('/api/auth/register', async (req, res) => {
-  const { name, email, password, role, constituency } = req.body;
-  // TODO: Use Prisma (shared-db) to create user
-  res.json({ success: true, message: 'User registered' });
+// Auth Routes
+fastify.post('/auth/register', async (request, reply) => {
+  const { name, email, password, role, constituency } = request.body as any;
+  // TODO: Use Prisma (@eloktantra/database) to create user
+  return { success: true, message: 'User registered' };
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
+fastify.post('/auth/login', async (request, reply) => {
+  const { email, password } = request.body as any;
   // TODO: Verify credentials with Prisma
-  const token = jwt.sign({ id: '1', email, role: UserRole.CITIZEN }, JWT_SECRET, { expiresIn: '1d' });
-  res.json({ success: true, token });
+  
+  // Dummy response
+  const token = "dummy-jwt-token"; // jwt.sign({ id: '1', email, role: 'CITIZEN' }, JWT_SECRET, { expiresIn: '1d' });
+  return { success: true, token };
 });
 
-app.listen(PORT, () => {
-  console.log(`Auth Service is running on port ${PORT}`);
+fastify.get('/auth/me', async (request, reply) => {
+  // TODO: Verify JWT and return user
+  return { success: true, user: { id: '1', email: 'user@example.com', role: 'CITIZEN' } };
 });
+
+const start = async () => {
+  try {
+    await fastify.listen({ port: PORT, host: '0.0.0.0' });
+    console.log(`Auth Service running on http://localhost:${PORT}`);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+};
+
+start();
