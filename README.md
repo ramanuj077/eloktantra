@@ -64,6 +64,12 @@ corepack pnpm --filter audit-service dev
 corepack pnpm --filter web dev
 ```
 
+## Deploying to Vercel (apps/web)
+
+- Vercel reads `vercel.json` at the repo root. Build/Install are set for pnpm and the monorepo.
+- Set these project env vars in Vercel: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_REQUEST_TIMEOUT_MS`, `NEXT_PUBLIC_DEMO_VOTER_ID`, `NEXT_PUBLIC_DEMO_REPORTER_ID`. The `@...` placeholders in `vercel.json` map to Vercel Project Environment Variables or Secrets.
+- Output directory is `apps/web/.next`; no `public` folder is required beyond the Next.js defaults.
+
 ## API Surface (Phase 1)
 
 - Auth: `/auth/register`, `/auth/login`, `/auth/me`
