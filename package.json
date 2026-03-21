@@ -1,0 +1,19 @@
+{
+  "name": "eloktantra-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "db:push": "pnpm --filter @eloktantra/database db:push",
+    "db:generate": "pnpm --filter @eloktantra/database db:generate",
+    "db:seed": "pnpm --filter @eloktantra/database db:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "turbo": "^1.12.0",
+    "typescript": "^5.0.0"
+  }
+}
