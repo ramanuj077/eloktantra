@@ -1,16 +1,33 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
-
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { login } from '@/lib/api/auth';
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Supabase auth logic would go here
-    console.log('Login attempt with:', { email, password });
+    setIsLoading(true);
+    setErrorMessage('');
+    
+    try {
+      const response = await login(email, password);
+      if (response.success) {
+        router.push('/dashboard');
+      } else {
+        setErrorMessage(response.error || 'Invalid credentials');
+      }
+    } catch (err) {
+      setErrorMessage('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -25,6 +42,11 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+          {errorMessage && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-2 rounded-xl text-sm font-medium">
+              {errorMessage}
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-gray-300 ml-1">Email Address</label>
             <input
@@ -34,6 +56,7 @@ export default function LoginPage() {
               className="w-full bg-secondary border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               placeholder="e.g. john@example.com"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -49,6 +72,7 @@ export default function LoginPage() {
               className="w-full bg-secondary border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               placeholder="••••••••"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -57,15 +81,17 @@ export default function LoginPage() {
               type="checkbox" 
               id="remember" 
               className="w-4 h-4 rounded border-white/10 bg-secondary text-primary focus:ring-primary"
+              disabled={isLoading}
             />
             <label htmlFor="remember" className="text-sm text-gray-400 font-medium">Remember me</label>
           </div>
 
           <button
             type="submit"
-            className="w-full py-4 bg-primary hover:bg-accent text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98]"
+            disabled={isLoading}
+            className="w-full py-4 bg-primary hover:bg-accent text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Login
+            {isLoading ? 'Signing In...' : 'Login'}
           </button>
         </form>
 

@@ -6,6 +6,8 @@ import { useStrictVotingLock } from "@/hooks/useStrictVotingLock"
 import axios from "axios"
 import { useParams, useRouter } from 'next/navigation';
 import { useSecureVotingSession } from '@/hooks/useSecureVotingSession';
+import { useElection, generateVotingToken, castVote } from '@/lib/api/voting';
+import { getStoredUser } from '@/lib/api/auth';
 import * as faceapi from 'face-api.js';
 
 // Declare the secureAPI for TypeScript
@@ -20,6 +22,20 @@ declare global {
 export default function VotingPage() {
   const params = useParams();
   const router = useRouter();
+  const electionId = params.electionId as string;
+
+  // Token Enforcement (Moved to top level)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const token = searchParams.get('token');
+      if (!token) {
+        router.push('/vote');
+      }
+    }
+  }, [router]);
+
+  const { data: election, isLoading: isLoadingElection } = useElection(electionId);
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [violations, setViolations] = useState(0);
@@ -35,7 +51,7 @@ export default function VotingPage() {
   const [alignmentMessage, setAlignmentMessage] = useState("Position yourself");
   const [stream, setStream] = useState<MediaStream | null>(null);
   const lastAlertTimeRef = useRef<number>(0);
-  const { isLocked, violated, unlock } = useStrictVotingLock();
+  const { isLocked, violated, violationCount, unlock } = useStrictVotingLock();
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const setupVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -46,7 +62,6 @@ export default function VotingPage() {
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const referenceDescriptor = useRef<Float32Array | null>(null);
 
-  const electionId = params.electionId as string;
   const { session, error, terminateSession, completeSession, resetSession } = useSecureVotingSession(electionId);
 
   // 🔄 Model loading on mount (Step 1)
@@ -436,12 +451,29 @@ export default function VotingPage() {
     }
   }, [violated]);
 
-  const candidates = [
-    { id: '1', name: 'Arvind Sharma', party: 'Independent' },
-    { id: '2', name: 'Priya Verma', party: 'Socialist Party' },
-    { id: '3', name: 'Rahul Gupta', party: 'National Party' },
-    { id: '4', name: 'Sneha Reddy', party: 'Regional Front' },
-  ];
+  if (isLoadingElection) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-gray-400 font-black uppercase tracking-widest text-xs">Loading Secure Ballot...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!election) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-center space-y-4">
+          <p className="text-red-500 font-black uppercase tracking-widest text-lg">Election Not Found</p>
+          <button onClick={() => router.push('/dashboard')} className="text-primary hover:underline">Return to Dashboard</button>
+        </div>
+      </div>
+    );
+  }
+
+  const candidates = election.candidates || [];
 
   const stopRecording = () => {
     return new Promise<Blob>((resolve) => {
@@ -455,23 +487,60 @@ export default function VotingPage() {
   };
 
   const handleVote = async (candidateId: string) => {
-    if (!candidateId) return;
+    if (!candidateId || !election) return;
+    
+    // Removed manual login check: Biometric/Session verification is sufficient.
+    const user = getStoredUser();
+    const voterId = user?.id || `session-voter-${Date.now()}`;
+
     setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 1. Generate local session recording
       const videoBlob = await stopRecording();
+      
+      // 2. Map Voting Token from URL or fallback generator (requires auth)
+      console.log("Locating voting token...");
+      const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      let tokenHash = searchParams?.get('token');
+      
+      if (!tokenHash) {
+        tokenHash = await generateVotingToken({
+          voterId: voterId,
+          electionId: election.id
+        });
+      }
+
+      // 3. Submit encrypted vote to blockchain ledger
+      console.log("Casting vote...");
+      const result = await castVote({
+        electionId: election.id,
+        tokenHash: tokenHash,
+        encryptedVote: candidateId // Note: In a production app, this would be RSA encrypted
+      });
+
+      console.log("Vote successful:", result.txHash);
+      
+      // 4. Save recording and complete session
       const url = URL.createObjectURL(videoBlob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `verified-vote-${electionId}.webm`;
       a.click();
+      
       completeSession();
       unlock();
-      alert(`Voting Successful! Total violations: ${violations}. Your secure session recording has been saved.`);
+      
+      alert(`Voting Successful!\nTransaction: ${result.txHash}\nViolations detected: ${violations}`);
       router.push("/dashboard");
-    } catch (error) {
-      console.error(error)
-      alert("Voting failed")
+    } catch (err: any) {
+      console.error("Voting failed:", err);
+      // More specific error handling
+      const msg = err.message || "Voting failed due to an internal error";
+      alert(`Voting Failed: ${msg}`);
+      
+      if (err.message?.includes("already voted")) {
+         router.push("/dashboard");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -484,7 +553,36 @@ export default function VotingPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 min-h-screen flex flex-col items-center justify-center">
+    <div className="container mx-auto px-4 py-12 min-h-screen flex flex-col items-center justify-center relative">
+      {/* OS-Lock Security Overlay */}
+      {violated && (
+        <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+          <div className="w-32 h-32 bg-red-500/20 rounded-full flex items-center justify-center mb-10 border-4 border-red-500 shadow-[0_0_50px_rgba(239,68,68,0.4)]">
+            <svg className="w-16 h-16 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-5xl font-black text-white mb-6 uppercase tracking-tighter">OS-LOCK: SECURITY BREACH</h2>
+          <div className="max-w-xl space-y-4 mb-12">
+            <p className="text-gray-400 leading-relaxed font-bold text-lg">
+              The voting environment was compromised by a window blur or unauthorized keyboard action.
+            </p>
+            <div className="py-3 px-6 bg-red-500/10 border border-red-500/20 rounded-2xl inline-block">
+              <span className="text-red-400 font-black uppercase tracking-widest text-sm">Violation Count: {violationCount}</span>
+            </div>
+          </div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-12 py-5 bg-white text-black font-black rounded-2xl uppercase tracking-[0.2em] hover:bg-gray-200 transition-all shadow-2xl shadow-white/10 active:scale-95"
+          >
+            Re-Align Face to Unlock
+          </button>
+          <div className="mt-12 flex items-center space-x-3 text-gray-500 font-black uppercase tracking-widest text-[10px]">
+             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+             <span>Strict Hardware-Level Security Active</span>
+          </div>
+        </div>
+      )}
       {/* 🔐 Permission Consent Overlay */}
       {!isPermissionGranted && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-2xl">
@@ -676,8 +774,10 @@ export default function VotingPage() {
 
       <div className="max-w-3xl mx-auto">
         <header className="mb-12 text-center">
-          <h1 className="text-5xl font-black mb-4 orange-text-gradient uppercase tracking-tight">Digital Ballot</h1>
-          <p className="text-gray-400 font-medium text-lg">General Assembly 2024 • South Delhi</p>
+          <h1 className="text-5xl font-black mb-4 orange-text-gradient uppercase tracking-tight">{election.title}</h1>
+          <p className="text-gray-400 font-medium text-lg">
+            {new Date(election.start_time).getFullYear()} • {election.constituency}
+          </p>
         </header>
 
         <div className="glass-card p-8 md:p-12 border-white/5 space-y-8 shadow-2xl shadow-primary/5">

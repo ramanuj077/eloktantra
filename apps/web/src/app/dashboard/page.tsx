@@ -123,29 +123,24 @@ export default function Dashboard() {
             </div>
           </section>
 
-          {/* Election Announcements */}
-          <section className="glass-card p-6 md:p-8 border-white/5 bg-primary/5">
-            <h2 className="text-xl font-bold mb-6 flex items-center space-x-2">
-              <svg className="w-5 h-5 md:w-6 md:h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.167a2.406 2.406 0 011.416-3.047 1.76 1.76 0 013.417-.592l2.147 6.167a2.406 2.406 0 01-1.416 3.047zM15.882 11.5l3.118 3.118M15.882 15.5l3.118-3.118" />
+          {/* Secure Voting Gateway */}
+          <section className="glass-card p-6 md:p-8 border-primary/20 bg-primary/5 shadow-2xl shadow-primary/10">
+            <h2 className="text-xl font-black mb-6 flex items-center space-x-2 text-primary uppercase tracking-tighter">
+              <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              <span>Elections</span>
+              <span>Secure Voting Gateway</span>
             </h2>
             <div className="space-y-4">
-              {elections.map(election => (
-                <div key={election.id} className="p-4 rounded-xl bg-background border border-white/10">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-gray-200 text-sm md:text-base">{election.title}</h3>
-                    <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-primary text-white rounded">
-                      {election.status}
-                    </span>
-                  </div>
-                  <p className="text-xs md:text-sm text-gray-500 mb-4">{election.date}</p>
-                  <Link href={`/vote/${election.id}`} className="block w-full py-2 bg-primary hover:bg-accent text-white text-center text-xs md:text-sm font-bold rounded-lg transition-all">
-                    Register to Vote
-                  </Link>
-                </div>
-              ))}
+              <p className="text-xs text-gray-400 leading-relaxed italic font-medium">
+                Elections are restricted to verified citizens. Complete biometric verification to unlock the ballot.
+              </p>
+              <Link 
+                href="/vote" 
+                className="block w-full py-4 bg-primary hover:bg-accent text-white text-center font-black uppercase tracking-[0.2em] rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98]"
+              >
+                Launch Verification →
+              </Link>
             </div>
           </section>
         </div>

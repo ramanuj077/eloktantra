@@ -4,8 +4,13 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { register } from '@/lib/api/auth';
+import { UserRole } from '@eloktantra/types';
+
 export default function RegisterPage() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,11 +19,37 @@ export default function RegisterPage() {
     constituency: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Registration logic would go here
-    console.log('Registration attempt with:', formData);
-    router.push('/verify');
+    setIsLoading(true);
+    setErrorMessage('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMessage('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        constituency: formData.constituency,
+        role: UserRole.CITIZEN,
+      });
+
+      if (response.success) {
+        // Registration success usually redirects to login or a verification page
+        router.push('/login?registered=true');
+      } else {
+        setErrorMessage(response.error || 'Registration failed');
+      }
+    } catch (err) {
+      setErrorMessage('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -42,6 +73,11 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+          {errorMessage && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-4 py-2 rounded-xl text-sm font-medium">
+              {errorMessage}
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-300 ml-1">Full Name</label>
@@ -49,6 +85,7 @@ export default function RegisterPage() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                disabled={isLoading}
                 className="w-full bg-secondary border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                 placeholder="e.g. John Doe"
                 required
@@ -61,6 +98,7 @@ export default function RegisterPage() {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
+                disabled={isLoading}
                 className="w-full bg-secondary border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                 placeholder="e.g. john@example.com"
                 required
@@ -76,6 +114,7 @@ export default function RegisterPage() {
                 type="password"
                 value={formData.password}
                 onChange={handleChange}
+                disabled={isLoading}
                 className="w-full bg-secondary border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                 placeholder="••••••••"
                 required
@@ -88,6 +127,7 @@ export default function RegisterPage() {
                 type="password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                disabled={isLoading}
                 className="w-full bg-secondary border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                 placeholder="••••••••"
                 required
@@ -101,6 +141,7 @@ export default function RegisterPage() {
               name="constituency"
               value={formData.constituency}
               onChange={handleChange}
+              disabled={isLoading}
               className="w-full bg-secondary border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all appearance-none cursor-pointer"
               required
             >
@@ -114,9 +155,10 @@ export default function RegisterPage() {
           <div className="pt-4">
             <button
               type="submit"
-              className="w-full py-4 bg-primary hover:bg-accent text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98]"
+              disabled={isLoading}
+              className="w-full py-4 bg-primary hover:bg-accent text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Account
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
           </div>
         </form>
