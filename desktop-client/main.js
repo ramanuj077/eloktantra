@@ -2,6 +2,10 @@ const { app, BrowserWindow, globalShortcut, ipcMain } = require("electron")
 const path = require("path")
 const usb = require("usb")
 
+// ── Configuration ─────────────────────────────────────────────
+// Point this to your deployed Vercel URL (or keep localhost for local dev)
+const APP_URL = process.env.APP_URL || "https://eloktantra-api.onrender.com"
+
 let win
 
 function createWindow() {
@@ -21,7 +25,7 @@ function createWindow() {
   })
 
   // Load the web app
-  win.loadURL("http://localhost:3000/vote/electron-session")
+  win.loadURL(`${APP_URL}/vote/electron-session`)
 
   // 🚫 Disable dev tools
   win.webContents.on("devtools-opened", () => {
@@ -30,7 +34,7 @@ function createWindow() {
 
   // 🚫 Block navigation
   win.webContents.on("will-navigate", (e, url) => {
-    if (!url.startsWith("http://localhost:3000")) {
+    if (!url.startsWith(APP_URL)) {
       e.preventDefault()
     }
   })

@@ -1,33 +1,33 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-const now = Date.now();
-const elections = [
-  {
-    id: '1',
-    title: 'General Assembly 2024',
-    constituency: 'South Delhi',
-    status: 'ACTIVE',
-    endTime: new Date(now + 86400000 * 2).toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Municipal Corporation',
-    constituency: 'North Delhi',
-    status: 'UPCOMING',
-    endTime: new Date(now + 86400000 * 15).toISOString(),
-  },
-  {
-    id: '3',
-    title: 'Student Council',
-    constituency: 'Central Delhi',
-    status: 'CLOSED',
-    endTime: new Date(now - 86400000 * 5).toISOString(),
-  },
-];
+import { useElections } from '@/lib/api/voting';
 
 export default function ElectionsPage() {
+  const router = useRouter();
+  const { data: elections, isLoading } = useElections();
+
+  useEffect(() => {
+    // Restrict direct access to elections until verified
+    // We check for 'voting_token' which is set in /vote step 4
+    const hasToken = localStorage.getItem('voting_token') || sessionStorage.getItem('voting_token');
+    if (!hasToken) {
+      router.push('/vote');
+    }
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-gray-400 font-black uppercase tracking-widest text-xs">Loading Secure Elections...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -38,7 +38,7 @@ export default function ElectionsPage() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {elections.map((election) => (
+          {elections?.map((election) => (
             <div key={election.id} className="glass-card overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:border-primary/20 flex flex-col">
               <div className="p-8 flex-grow">
                 <div className="flex justify-between items-start mb-6">
@@ -65,7 +65,7 @@ export default function ElectionsPage() {
                 <div className="mt-6 pt-6 border-t border-white/5 space-y-2">
                   <p className="text-slate-500 uppercase tracking-widest text-[10px]">Ends On</p>
                   <p className="text-slate-800 text-sm">
-                    {new Date(election.endTime).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                    {new Date(election.end_time).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                   </p>
                 </div>
               </div>

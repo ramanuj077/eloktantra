@@ -22,7 +22,8 @@ export default function DigiLockerUploadPage() {
       const formData = new FormData()
       formData.append("aadhaar", file)
       
-      const response = await fetch("http://localhost:5001/upload-aadhaar", {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001"
+      const response = await fetch(`${baseUrl}/upload-aadhaar`, {
         method: "POST",
         body: formData
       })
@@ -34,7 +35,7 @@ export default function DigiLockerUploadPage() {
           id: data.userId || Math.random().toString(36).substr(2, 9),
           name: file.name,
           type: docType as any,
-          fileUrl: `http://localhost:5001/uploads/${data.file}`, // Simulation url
+          fileUrl: `${baseUrl}/uploads/${data.file}`, // Simulation url
           uploadedAt: new Date().toISOString(),
           verified: true
         }

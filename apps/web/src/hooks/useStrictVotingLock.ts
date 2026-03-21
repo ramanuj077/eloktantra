@@ -46,13 +46,17 @@ export const useStrictVotingLock = () => {
     // 🚫 KEYBOARD BLOCK
     const blockKeys = (e: KeyboardEvent) => {
       if (isLocked) {
+        // console.log("Key pressed:", e.key, e.code);
         if (
           e.ctrlKey ||
           e.metaKey ||
           e.altKey ||
           e.key === "Tab" ||
           e.key === "Escape" ||
-          e.key === "F12"
+          e.key === "F12" ||
+          e.key === "F5" ||
+          (e.ctrlKey && e.key === "r") ||
+          (e.metaKey && e.key === "r")
         ) {
           e.preventDefault()
           setViolated(true)
@@ -76,6 +80,12 @@ export const useStrictVotingLock = () => {
       }
     }
 
+    const interval = setInterval(() => {
+      if (isLocked && !document.fullscreenElement) {
+        enterFullscreen();
+      }
+    }, 3000);
+
     window.addEventListener("blur", handleBlur)
     document.addEventListener("visibilitychange", handleVisibility)
     document.addEventListener("fullscreenchange", handleFullscreenExit)
@@ -84,6 +94,7 @@ export const useStrictVotingLock = () => {
     window.addEventListener("beforeunload", preventUnload)
 
     return () => {
+      clearInterval(interval)
       window.removeEventListener("blur", handleBlur)
       document.removeEventListener("visibilitychange", handleVisibility)
       document.removeEventListener("fullscreenchange", handleFullscreenExit)
