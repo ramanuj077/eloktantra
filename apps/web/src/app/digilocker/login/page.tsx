@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useDigiLockerStore } from "@/lib/store/digilocker-store"
 import { ShieldCheck, Phone, Smartphone, ChevronRight, Fingerprint, Loader2, Sparkles, AlertCircle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
-export default function DigiLockerLoginPage() {
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login, isAuthenticated } = useDigiLockerStore()
@@ -216,5 +216,17 @@ export default function DigiLockerLoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function DigiLockerLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-12 h-12 animate-spin text-[#003366]" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }
