@@ -73,6 +73,20 @@ export default function VotePage() {
     window.open('/digilocker/login?from=vote', '_blank');
   };
 
+  const handleSkipDigiLocker = () => {
+    // 1. Generate a demo token
+    const demoToken = `demo-token-${Math.random().toString(36).substring(7)}`;
+    
+    // 2. Save it to state and localStorage (as required by the app logic)
+    setVotingToken(demoToken);
+    localStorage.setItem('voting_token', demoToken);
+    setUser({ id: 'demo-user-123', name: 'Demo Voter' });
+
+    // 3. Determine target election and redirect
+    const targetElectionId = elections?.[0]?.id || 'delhi-2024';
+    router.push(`/vote/${targetElectionId}?token=${demoToken}`);
+  };
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1280, height: 720 } });
@@ -334,6 +348,15 @@ export default function VotePage() {
                 </>
               )}
             </button>
+            
+            {/* Demo Skip Button */}
+            <button
+              onClick={handleSkipDigiLocker}
+              className="w-full mt-4 py-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-xl transition-all text-sm font-medium"
+            >
+              Skip All (Demo)
+            </button>
+
             <p className="mt-6 text-xs text-gray-500">Secure connection powered by eLoktantra Auth Bridge</p>
           </div>
         )}
