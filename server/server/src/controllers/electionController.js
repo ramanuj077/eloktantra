@@ -88,7 +88,29 @@ const getElectionById = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching election by ID:', error);
-    res.status(500).json({ error: 'Failed to fetch election details' });
+const updateElection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = { ...req.body };
+    
+    // Map dates
+    if (data.start_date && !data.start_time) data.start_time = data.start_date;
+    if (data.end_date && !data.end_time) data.end_time = data.end_date;
+
+    const election = await electionRepository.update(id, data);
+    res.json({ success: true, election });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update election' });
+  }
+};
+
+const deleteElection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await electionRepository.deleteById(id);
+    res.json({ success: true, message: 'Election deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete election' });
   }
 };
 
@@ -97,5 +119,7 @@ module.exports = {
   getElections,
   createElection,
   updateElectionStatus,
-  getElectionById
+  getElectionById,
+  updateElection,
+  deleteElection
 };

@@ -63,6 +63,8 @@ export interface Election {
   candidates_count: number;
   contract_address?: string;
   total_votes?: number;
+  description?: string;
+  constituency?: string;
 }
 
 export interface Voter {
