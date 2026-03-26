@@ -1,29 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-export const dynamic = 'force-dynamic';
-import { connectDB } from '@/lib/mongodb';
-import { Constituency } from '@/models/CoreModels';
+import axios from 'axios';
 
-/**
- * GET /api/constituencies?electionId=
- */
+export const dynamic = 'force-dynamic';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-elokantra.onrender.com';
+
+// GET /api/constituencies?electionId=
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
     const { searchParams } = new URL(request.url);
     const electionId = searchParams.get('electionId');
 
-    if (!electionId) {
-      return NextResponse.json({ success: false, error: 'electionId is required' }, { status: 400 });
-    }
+    // Proxy to backend
+    const res = await axios.get(`${BACKEND_URL}/api/admin/constituency`, {
+      params: electionId ? { electionId } : {},
+      headers: {
+        'x-admin-key': process.env.ADMIN_API_KEY || 'eLoktantra-AdminPortal-SecretKey-2024'
+      }
+    });
 
-    const constituencies = await Constituency.find({ electionId }).sort({ name: 1 });
+    const data = res.data;
+    const list = Array.isArray(data) ? data : (data.constituencies || data.data || []);
     
     return NextResponse.json({ 
       success: true, 
-      count: constituencies.length, 
-      constituencies 
+      count: list.length, 
+      constituencies: list.map((c: any) => ({ ...c, id: c.id || c._id?.toString() })) 
     });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error('Constituency proxy error:', err.message);
+    return NextResponse.json({ success: false, error: 'Source of truth offline' }, { status: 502 });
   }
 }

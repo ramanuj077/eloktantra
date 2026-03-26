@@ -1,45 +1,21 @@
-import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import { Election, Vote, Issue, Candidate } from '@/models/CoreModels';
+import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
+
+export const dynamic = 'force-dynamic';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-elokantra.onrender.com';
 
 /**
- * GET /api/dashboard — aggregated stats for the dashboard
+ * GET /api/dashboard — aggregated stats for the dashboard from Render backend.
  */
 export async function GET() {
   try {
-    await connectDB();
-
-    const [
-      totalCandidates,
-      totalVotes,
-      activeElectionsCount,
-      openIssuesCount,
-      recentIssues,
-      activeElectionsList,
-    ] = await Promise.all([
-      Candidate.countDocuments(),
-      Vote.countDocuments(),
-      Election.countDocuments({ isActive: true }),
-      Issue.countDocuments(),
-      Issue.find({}).sort({ createdAt: -1 }).limit(5).lean(),
-      Election.find({ isActive: true }).sort({ startDate: -1 }).limit(5).lean(),
-    ]);
-
-    const elections = activeElectionsList.map((e: any) => ({ ...e, id: e._id.toString() }));
-    const issues = recentIssues.map((i: any) => ({ ...i, id: i._id.toString() }));
-
-    return NextResponse.json({
-      success: true,
-      stats: {
-        totalCandidates,
-        totalVotes,
-        activeElections: activeElectionsCount,
-        openIssues: openIssuesCount,
-      },
-      recentIssues: issues,
-      activeElections: elections,
+    const res = await axios.get(`${BACKEND_URL}/api/dashboard`, {
+        timeout: 90000 // 90s timeout (Extreme for Render cold-starts)
     });
+    return NextResponse.json(res.data);
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error('Dashboard proxy error:', err.message);
+    return NextResponse.json({ success: false, error: err.response?.data?.error || 'Dashboard stats failed' }, { status: 502 });
   }
 }

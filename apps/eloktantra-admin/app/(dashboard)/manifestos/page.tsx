@@ -61,28 +61,21 @@ export default function ManifestosAdmin() {
   }, [selectedElection, selectedConstituency]);
 
   useEffect(() => {
-    if (!selectedElection) {
-        setConstituencies([]);
-        return;
-    };
     const fetchCons = async () => {
       try {
-        const res = await adminGetConstituencies(selectedElection);
+        const res = await adminGetConstituencies();
         // Robust data extraction (Render/Local/Standard compatibility)
         const list = Array.isArray(res.data) 
           ? res.data 
           : (res.data.constituencies || res.data.data || res.data.list || []);
           
         setConstituencies(list);
-        setSelectedConstituency('');
-        setCandidates([]);
-        setSelectedCandidate('');
       } catch (err) {
         toast.error('Failed to load regions');
       }
     };
     fetchCons();
-  }, [selectedElection]);
+  }, []);
 
   useEffect(() => {
     if (!selectedConstituency) {

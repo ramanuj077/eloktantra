@@ -1,52 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import { Issue } from '@/models/CoreModels';
-import { authenticate } from '@/lib/auth';
+import axios from 'axios';
 
-// GET /api/issues
+export const dynamic = 'force-dynamic';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-elokantra.onrender.com';
+
+// GET /api/issues -> Fetch from Render
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
     const { searchParams } = new URL(request.url);
-    const constituency = searchParams.get('constituency');
-    const status = searchParams.get('status');
-    const type = searchParams.get('type');
+    const electionId = searchParams.get('electionId');
+    const constituencyId = searchParams.get('constituencyId');
 
-    const query: any = {};
-    if (constituency) query.constituency = constituency;
-    if (status) query.status = status;
-    if (type) query.issueType = type;
+    const res = await axios.get(`${BACKEND_URL}/api/admin/issue`, {
+        params: { electionId, constituencyId },
+        headers: {
+            'x-admin-key': process.env.ADMIN_API_KEY || 'eLoktantra-AdminPortal-SecretKey-2024'
+        }
+    });
 
-    const issues = await Issue.find(query)
-      .sort({ createdAt: -1 })
-      .lean();
-
-    const normalized = issues.map(i => ({ ...i, id: i._id.toString() }));
-    return NextResponse.json({ success: true, count: normalized.length, issues: normalized });
+    const data = res.data;
+    const list = Array.isArray(data) ? data : (data.issues || data.data || []);
+    
+    return NextResponse.json({ 
+      success: true, 
+      count: list.length, 
+      issues: list.map((i: any) => ({ ...i, id: i.id || i._id?.toString() })) 
+    });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error('Issue proxy GET error:', err.message);
+    return NextResponse.json({ success: false, error: 'Source of truth offline' }, { status: 502 });
   }
 }
 
-// POST /api/issues — citizen reports a new issue
+// POST /api/issues -> Create in Render
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-    const payload = await authenticate(request);
     const body = await request.json();
-    const { title, description, location, constituency, issueType } = body;
-
-    if (!title || !description || !location || !constituency || !issueType) {
-      return NextResponse.json({ success: false, error: 'All fields are required' }, { status: 400 });
-    }
-
-    const issue = await Issue.create({
-      title, description, location, constituency, issueType,
-      reportedBy: payload?.userId || undefined,
+    
+    const res = await axios.post(`${BACKEND_URL}/api/admin/issue`, body, {
+        headers: {
+            'x-admin-key': process.env.ADMIN_API_KEY || 'eLoktantra-AdminPortal-SecretKey-2024'
+        }
     });
 
-    return NextResponse.json({ success: true, issue }, { status: 201 });
+    return NextResponse.json(res.data, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error('Issue proxy POST error:', err.message);
+    return NextResponse.json({ success: false, error: 'Failed to record grievance' }, { status: 502 });
   }
 }

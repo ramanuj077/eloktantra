@@ -1,29 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import { Promise as PromiseModel } from '@/models/CoreModels';
+import axios from 'axios';
 
-// GET /api/promises
+export const dynamic = 'force-dynamic';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-elokantra.onrender.com';
+
+/**
+ * GET /api/promises
+ * Proxy to Render Backend for candidate manifestos/promises.
+ */
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
     const { searchParams } = new URL(request.url);
-    const candidateId = searchParams.get('candidateId');
-    const constituency = searchParams.get('constituency');
-    const status = searchParams.get('status');
-
-    const query: any = {};
-    if (candidateId) query.candidateId = candidateId;
-    if (constituency) query.constituency = constituency;
-    if (status) query.status = status;
-
-    const promises = await PromiseModel.find(query)
-      .populate('candidateId', 'name party') // join candidate name+party
-      .sort({ createdAt: -1 })
-      .lean();
-
-    const normalized = promises.map(p => ({ ...p, id: p._id.toString() }));
-    return NextResponse.json({ success: true, count: normalized.length, promises: normalized });
+    const res = await axios.get(`${BACKEND_URL}/api/admin/promise?${searchParams.toString()}`);
+    return NextResponse.json(res.data);
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error('Promises proxy error:', err.message);
+    return NextResponse.json({ success: false, error: err.response?.data?.error || 'Promises retrieval failed' }, { status: 502 });
   }
 }

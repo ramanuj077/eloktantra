@@ -1,27 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import { Election } from '@/models/CoreModels';
+import axios from 'axios';
+
+export const dynamic = 'force-dynamic';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://backend-elokantra.onrender.com';
 
 // GET /api/elections
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
     const { searchParams } = new URL(request.url);
-    const constituency = searchParams.get('constituency');
-    const activeOnly = searchParams.get('active') !== 'false';
+    const activeOnly = searchParams.get('active') === 'true'; // Change default to show all
 
-    const query: any = {};
-    if (activeOnly) query.isActive = true;
-    if (constituency) query.constituency = constituency;
+    // Call the centralized backend election endpoint (using admin route for full view)
+    const res = await axios.get(`${BACKEND_URL}/api/admin/election`, {
+      headers: {
+        'x-admin-key': process.env.ADMIN_API_KEY || 'eLoktantra-AdminPortal-SecretKey-2024'
+      },
+      timeout: 120000 // 120s timeout (Max for Render cold-starts)
+    });
 
-    const elections = await Election.find(query)
-      .sort({ startDate: -1 })
-      .lean();
+    const data = res.data;
+    let elections = Array.isArray(data) ? data : (data.elections || data.data || []);
 
-    // Normalize _id to id for frontend
-    const normalized = elections.map(e => ({ ...e, id: e._id.toString() }));
+    // Filter logic using the backend 'status' field
+    if (activeOnly) {
+      elections = elections.filter((e: any) => e.status === 'ACTIVE');
+    }
+
+    // Normalize for frontend
+    const normalized = elections.map((e: any) => ({ 
+      ...e, 
+      id: e.id || e._id?.toString(),
+      title: e.title || e.name || 'Untitled',
+      isActive: e.status === 'ACTIVE'
+    }));
+
     return NextResponse.json({ success: true, count: normalized.length, elections: normalized });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error('Election proxy error:', err.message);
+    return NextResponse.json({ success: false, error: 'Source of truth offline' }, { status: 502 });
   }
 }
