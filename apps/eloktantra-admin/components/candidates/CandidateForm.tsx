@@ -80,11 +80,22 @@ export default function CandidateForm({ initialData, id }: { initialData?: any, 
 
   const onSubmit = async (values: CandidateFormValues) => {
     try {
-      await adminCreateCandidate({
-         ...values,
-         id: id // Pass current ID if editing
-      });
-      toast.success(id ? 'Candidate updated successfully' : 'Candidate nominated successfully');
+      // Redundant key mapping for backend resilience
+      const submissionData = {
+        ...values,
+        assets: parseFloat(values.net_worth || '0'), // For legacy/local schema
+        net_worth: values.net_worth,                // For Render schema
+        criminalCases: values.criminal_cases,       // For legacy/local schema
+        criminal_cases: values.criminal_cases,      // For Render schema
+      };
+
+      if (id) {
+        await adminUpdateCandidate(id, submissionData);
+        toast.success("Candidate updated successfully!");
+      } else {
+        await adminCreateCandidate(submissionData);
+        toast.success("Candidate nominated successfully!");
+      }
       router.push('/candidates');
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to save candidate');
