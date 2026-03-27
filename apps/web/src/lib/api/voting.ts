@@ -95,7 +95,7 @@ export const castVote = async (params: {
     return { txHash: data.txHash || 'demo-tx-hash', receipt: data.receipt || 'demo-receipt' };
   } catch (error) {
     console.warn('Failed to cast vote, returning DEMO success:', error);
-    return { txHash: '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join(''), receipt: 'DEMO-RECEIPT' };
+    return { txHash: '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''), receipt: 'DEMO-RECEIPT' };
   }
 };
 

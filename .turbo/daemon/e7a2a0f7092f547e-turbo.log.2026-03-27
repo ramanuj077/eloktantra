@@ -81,3 +81,20 @@
 2026-03-27T22:15:32.106069Z  WARN daemon_server: turborepo_lib::commands::daemon: daemon already running
 2026-03-27T22:15:35.594218Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo\\daemon\\e7a2a0f7092f547e-turbo.log.2026-03-27")}
 2026-03-27T22:15:35.594273Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-27T22:15:35.703357Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo\\daemon\\e7a2a0f7092f547e-turbo.log.2026-03-27")}
+2026-03-27T22:15:35.703414Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-27T22:15:36.197704Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo\\cookies"), AnchoredSystemPathBuf(".turbo")}
+2026-03-27T22:15:36.197737Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-27T22:16:00.909600Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps\\eloktantra-admin\\.next")}
+2026-03-27T22:16:00.912357Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("eloktantra-admin"), path: AnchoredSystemPathBuf("apps\\eloktantra-admin") }}))
+2026-03-27T22:16:02.994637Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps\\eloktantra-admin\\.next")}
+2026-03-27T22:16:02.994675Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("eloktantra-admin"), path: AnchoredSystemPathBuf("apps\\eloktantra-admin") }}))
+2026-03-27T22:16:03.882074Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2026-03-27T22:16:03.882875Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps\\eloktantra-admin\\.next")}
+2026-03-27T22:16:03.882893Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("eloktantra-admin"), path: AnchoredSystemPathBuf("apps\\eloktantra-admin") }}))
+2026-03-27T22:16:03.882993Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2026-03-27T22:16:03.984408Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps\\eloktantra-admin\\.next")}
+2026-03-27T22:16:03.984445Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("eloktantra-admin"), path: AnchoredSystemPathBuf("apps\\eloktantra-admin") }}))
+2026-03-27T22:16:04.257382Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2026-03-27T22:23:42.896597Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo\\daemon\\e7a2a0f7092f547e-turbo.log.2026-03-27")}
+2026-03-27T22:23:42.898976Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
