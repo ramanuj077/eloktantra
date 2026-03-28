@@ -736,12 +736,13 @@ function VotingContent() {
                   unlock();
                   setActiveViolation(null);
                 } else {
-                  window.location.reload();
+                  terminateSession();
+                  window.location.href = "/";
                 }
               }}
               className="px-12 py-5 bg-white text-black font-black rounded-2xl uppercase tracking-[0.2em] hover:bg-gray-200 transition-all shadow-2xl shadow-white/10 active:scale-95"
             >
-              {isDevMode ? "Developer: Clear & Continue" : "Re-Align Face to Unlock"}
+              {isDevMode ? "Developer: Clear & Continue" : "Return to Home"}
             </button>
           </div>
 
